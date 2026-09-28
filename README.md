@@ -13,6 +13,7 @@ Turn any material into text — images, scanned books and videos, ready for down
 | [`vision.py`](vision.py) | 让纯文本模型"看图" | 图片 → 文字描述 | **零依赖**（纯标准库） |
 | [`ocr_pdf.py`](ocr_pdf.py) | 扫描版 PDF 转文本 | PDF → 分页 txt | PyMuPDF + RapidOCR |
 | [`skills/video-downloader`](skills/video-downloader/) | 视频归档 + 转写 | 视频链接 → 视频 + 原文案 + 音频 + 转写稿 | yt-dlp + ffmpeg |
+| [`rag/`](rag/) | 对产出文本提问（RAG） | txt 素材 → 带引用的回答 | chromadb + numpy |
 
 > 设计目标：把图片、书、视频这些"非文本素材"统一转成文本，喂给 LLM、知识库或 RAG 检索——这是构建个人 AI 知识管道的第一步。
 
@@ -120,6 +121,29 @@ python3 scripts/download_video.py "<url>" --output-dir ./downloads --asr whisper
 
 ---
 
+## rag/ — 对产出文本提问（RAG 知识库）
+
+把上面三件套产出的文本入库 → 向量化（SiliconFlow `BAAI/bge-m3`）→ 检索 → 生成（智谱 `glm-4-flash`，只依据检索片段作答）。两个端点都有免费档、国内直连。
+
+**差异化点**：loader 保留位置元数据——视频转写稿的 `[MM:SS]` 时间戳、OCR 的页码。检索命中的回答末尾会列出引用来源，视频问题可以直接回跳到对应分钟。
+
+```bash
+pip install -r requirements.txt          # rag/ 需要 chromadb + numpy
+
+# 1) 入库（格式自动嗅探：[MM:SS] 行 → 转写稿；"===== 第 N 页 =====" → OCR；否则按空行分段）
+python -m rag.ingest downloads/bilibili_xxx/transcript.txt
+python -m rag.ingest book.ocr.txt captions.txt
+
+# 2) 提问：检索 top-k → 生成 → 答案 + 引用列表
+python -m rag.ask "视频里 block_size 是什么意思"
+```
+
+需要的环境变量：`SILICONFLOW_API_KEY`（embedding）、`ZHIPU_API_KEY`（生成）。
+
+核心链路（切分 / embedding 调用 / 检索 / 生成）为手写实现，不依赖 LangChain；向量库提供 Chroma 与零依赖 numpy 余弦两个可互换后端（`rag/store.py`）。测试：`pip install pytest && pytest`。
+
+---
+
 ## 目录结构
 
 ```
@@ -127,6 +151,16 @@ content-distillery/
 ├── vision.py                  # 识图（零依赖）
 ├── ocr_pdf.py                 # 扫描 PDF OCR
 ├── requirements.txt
+├── pyproject.toml
+├── rag/                       # RAG 知识库：入库 / 检索 / 带引用问答
+│   ├── config.py              # 端点与参数（key 走环境变量）
+│   ├── loaders.py             # transcript / ocr / plain 三种 loader + 格式嗅探
+│   ├── chunker.py             # 贪心合并 + 滑动重叠
+│   ├── embeddings.py          # SiliconFlow bge-m3（批量 + 退避重试）
+│   ├── store.py               # Chroma / numpy 双后端
+│   ├── ingest.py              # CLI：入库
+│   └── ask.py                 # CLI：问答
+├── tests/
 └── skills/
     └── video-downloader/      # agent skill：视频下载 + 转写
         ├── SKILL.md
@@ -138,8 +172,8 @@ content-distillery/
 
 ## Roadmap
 
-- **v0.1**（当前）— 三件套：识图 / OCR / 视频转写
-- **v0.2** — RAG 知识库：把转出的文本入库、切分、检索、问答（本仓库的下一站）
+- **v0.1** ✅ — 三件套：识图 / OCR / 视频转写
+- **v0.2**（进行中）— RAG 知识库：入库、切分、检索、带引用问答；后续补检索评估与 Web 界面
 - **v0.3** — MCP Server 封装：让 AI Agent 直接调用这些能力
 
 ## 使用边界

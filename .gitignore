@@ -8,6 +8,7 @@ venv/
 # Outputs
 downloads/
 *.ocr.txt
+rag_data/
 
 # OS / editor
 .DS_Store

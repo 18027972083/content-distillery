@@ -8,3 +8,7 @@ rapidocr-onnxruntime>=1.3
 #   - ffmpeg        (audio extraction)
 #   - yt-dlp        (bilibili / youtube / xiaohongshu providers)
 #   - whisper       (optional local ASR backend)
+
+# rag/
+chromadb>=0.5
+numpy>=1.26
