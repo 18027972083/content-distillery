@@ -30,8 +30,6 @@ pip install -r requirements.txt        # 仅 ocr_pdf 需要；vision.py 零依�
 
 把图片交给任意 OpenAI 兼容的视觉模型，拿回文字描述。适合给"看不见图"的纯文本模型 / Agent 补充视觉输入。
 
-**默认走智谱 `glm-4v-flash`（有免费额度），也可切到 SiliconFlow 或任何兼容端点。**
-
 ```bash
 # 默认：智谱
 export ZHIPU_API_KEY="your-key"
@@ -54,7 +52,7 @@ python vision.py photo.jpg \
 | `--api-key` | 显式传 key（默认读环境变量 `ZHIPU_API_KEY` / `SILICONFLOW_API_KEY`） |
 | `--max-tokens` | 最大输出 token（智谱 glm-4v-flash 上限 1024） |
 
-**为什么值得一看**：整个脚本只用 Python 标准库（`urllib` + `base64`），没有任何第三方依赖——拷到任何有 Python 的机器上就能跑。
+**为什么值得一看**：整个脚本只用 Python 标准库（`urllib` + `base64`），零第三方依赖；且不绑定厂商——任何 OpenAI 兼容端点（智谱、SiliconFlow、自部署模型）都能用。
 
 ---
 
