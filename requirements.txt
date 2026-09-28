@@ -1,0 +1,10 @@
+# vision.py has zero third-party dependencies (Python standard library only).
+
+# ocr_pdf.py
+PyMuPDF>=1.24
+rapidocr-onnxruntime>=1.3
+
+# video-downloader additionally needs CLI tools (not installable via pip):
+#   - ffmpeg        (audio extraction)
+#   - yt-dlp        (bilibili / youtube / xiaohongshu providers)
+#   - whisper       (optional local ASR backend)
